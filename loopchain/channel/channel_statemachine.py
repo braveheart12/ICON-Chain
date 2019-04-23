@@ -104,7 +104,7 @@ class ChannelStateMachine(object):
     @statemachine.transition(source=('Vote', 'LeaderComplain'), dest='LeaderComplain')
     def leader_complain(self):
         pass
-
+    
     def _is_leader(self):
         return self.__channel_service.block_manager.peer_type == loopchain_pb2.BLOCK_GENERATOR
 
