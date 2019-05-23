@@ -12,7 +12,3 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """A package for restful API server"""
-
-from .peer_service_stub import *
-from .rest_property import *
-from .rest_server_rs import *
