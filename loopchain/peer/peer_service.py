@@ -25,7 +25,7 @@ import grpc
 from loopchain.baseservice import CommonSubprocess
 from loopchain.baseservice import StubManager, ObjectManager, RestStubManager
 from loopchain.blockchain import *
-from loopchain.container import RestService
+from loopchain.rest_server.rest_service import RestService
 from loopchain.crypto.signature import Signer
 from loopchain.peer import PeerInnerService, PeerOuterService
 from loopchain.protos import loopchain_pb2, loopchain_pb2_grpc

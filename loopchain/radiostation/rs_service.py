@@ -22,7 +22,7 @@ import timeit
 import loopchain.utils as util
 from loopchain import configure as conf
 from loopchain.baseservice import ObjectManager, TimerService, Timer
-from loopchain.container import RestServiceRS
+from loopchain.rest_server.rest_service_rs import RestServiceRS
 from loopchain.peer import ChannelManager
 from loopchain.protos import loopchain_pb2_grpc
 from loopchain.radiostation import OuterService, AdminService, AdminManager
