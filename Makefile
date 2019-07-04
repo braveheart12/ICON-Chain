@@ -33,13 +33,21 @@ requirements:
 all: install generate
 
 # pip install packages & generate-proto
-develop: install generate-proto
+develop: install-dev generate-proto
 
 # pip install packages
 install:
 	$(PIP_INSTALL) git+https://github.com/icon-project/icon-service.git@master
 	$(PIP_INSTALL) git+https://github.com/icon-project/icon-commons.git@master
 	$(PIP_INSTALL) git+https://github.com/icon-project/icon-rpc-server.git@master
+	$(PIP_INSTALL) tbears
+	$(PIP_INSTALL_REQUIREMENTS)
+
+# pip install packages
+install-dev:
+	$(PIP_INSTALL) git+https://github.com/icon-project/icon-service.git@Loopchain_IISS
+	$(PIP_INSTALL) git+https://github.com/icon-project/icon-commons.git@master
+	$(PIP_INSTALL) git+https://github.com/icon-project/icon-rpc-server.git@develop
 	$(PIP_INSTALL) tbears
 	$(PIP_INSTALL_REQUIREMENTS)
 
