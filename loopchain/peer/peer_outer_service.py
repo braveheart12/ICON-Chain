@@ -17,11 +17,13 @@ import asyncio
 import copy
 import datetime
 import json
-import pickle
+import logging
 from functools import partial
 
-from loopchain.baseservice import TimerService
-from loopchain.blockchain import *
+from loopchain import utils
+from loopchain import configure as conf
+from loopchain.baseservice import ObjectManager
+from loopchain.blockchain import ChannelStatusError
 from loopchain.peer import status_code
 from loopchain.protos import loopchain_pb2_grpc, message_code, ComplainLeaderRequest, loopchain_pb2
 from loopchain.utils.message_queue import StubCollection
@@ -58,11 +60,6 @@ class PeerOuterService(loopchain_pb2_grpc.PeerServiceServicer):
 
         channel_name = conf.LOOPCHAIN_DEFAULT_CHANNEL if request.channel == '' else request.channel
         channel_stub = StubCollection().channel_stubs[channel_name]
-
-        # FIXME : is need?
-        if conf.ENABLE_REP_RADIO_STATION and request.message == "check peer status by rs":
-            channel_stub.sync_task().reset_timer(TimerService.TIMER_KEY_CONNECT_PEER)
-
         callback = partial(self.__status_update, request.channel)
         future = asyncio.run_coroutine_threadsafe(
             channel_stub.async_task().get_status(),

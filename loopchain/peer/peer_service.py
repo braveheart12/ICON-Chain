@@ -16,21 +16,21 @@ It has secure outer service for p2p consensus and status monitoring.
 And also has insecure inner service for inner process modules."""
 
 import getpass
+import logging
 import multiprocessing
 import signal
 import timeit
-import json
 from functools import partial
 
 import grpc
 
-from loopchain.baseservice import CommonSubprocess
-from loopchain.baseservice import StubManager, RestStubManager
-from loopchain.blockchain import *
+from loopchain import configure as conf
+from loopchain import utils
+from loopchain.baseservice import CommonSubprocess, ObjectManager
 from loopchain.container import RestService
 from loopchain.crypto.signature import Signer
 from loopchain.peer import PeerInnerService, PeerOuterService
-from loopchain.protos import loopchain_pb2, loopchain_pb2_grpc
+from loopchain.protos import loopchain_pb2_grpc
 from loopchain.tools.grpc_helper import GRPCHelper
 from loopchain.utils import loggers, command_arguments
 from loopchain.utils.message_queue import StubCollection
@@ -62,7 +62,6 @@ class PeerService:
         self._radio_station_target = radio_station_target
         logging.info("Set Radio Station target is " + self._radio_station_target)
 
-        self._radio_station_stub = None
         self._peer_id = None
         self._node_key = bytes()
         self.p2p_outer_server: grpc.Server = None
@@ -113,23 +112,6 @@ class PeerService:
         return self._radio_station_target
 
     @property
-    def stub_to_radiostation(self):
-        if self._radio_station_stub is None:
-            if self.is_support_node_function(conf.NodeFunction.Vote):
-                if conf.ENABLE_REP_RADIO_STATION:
-                    self._radio_station_stub = StubManager.get_stub_manager_to_server(
-                        self._radio_station_target,
-                        loopchain_pb2_grpc.RadioStationStub,
-                        conf.CONNECTION_RETRY_TIMEOUT_TO_RS,
-                        ssl_auth_type=conf.GRPC_SSL_TYPE)
-                else:
-                    self._radio_station_stub = None
-            else:
-                self._radio_station_stub = RestStubManager(self._radio_station_target)
-
-        return self._radio_station_stub
-
-    @property
     def peer_port(self):
         return self._peer_port
 
@@ -146,23 +128,7 @@ class PeerService:
 
     def _get_channel_infos(self):
         if self.is_support_node_function(conf.NodeFunction.Vote):
-            if conf.ENABLE_REP_RADIO_STATION:
-                response = self.stub_to_radiostation.call_in_times(
-                    method_name="GetChannelInfos",
-                    message=loopchain_pb2.GetChannelInfosRequest(
-                        peer_id=self._peer_id,
-                        peer_target=self._peer_target,
-                        group_id=self._peer_id),
-                    retry_times=conf.CONNECTION_RETRY_TIMES_TO_RS,
-                    is_stub_reuse=False,
-                    timeout=conf.CONNECTION_TIMEOUT_TO_RS
-                )
-
-                if not response:
-                    return None
-                logging.info(f"Connect to channels({utils.pretty_json(response.channel_infos)})")
-                return json.loads(response.channel_infos)
-            elif conf.LOAD_PEERS_FROM_IISS:
+            if conf.LOAD_PEERS_FROM_IISS:
                 # this is temporary code for legacy support, and will be removed at next release.
                 return {channel: {'score_package': DEFAULT_SCORE_PACKAGE}
                         for channel in conf.CHANNEL_OPTION}
@@ -357,7 +323,5 @@ class PeerService:
         self._node_type = conf.NodeType(node_type)
         self.is_support_node_function = \
             partial(conf.NodeType.is_support_node_function, node_type=node_type)
-
-        self._radio_station_stub = None
 
         self._load_channel_infos()

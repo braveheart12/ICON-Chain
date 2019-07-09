@@ -25,11 +25,11 @@ from earlgrey import MessageQueueService
 
 from loopchain import configure as conf
 from loopchain import utils
-from loopchain.baseservice import BroadcastScheduler, BroadcastSchedulerFactory, BroadcastCommand, PeerListData, \
-    PeerInfo
+from loopchain.baseservice import (BroadcastScheduler, BroadcastSchedulerFactory, BroadcastCommand,
+                                   PeerListData, PeerInfo)
 from loopchain.baseservice import ObjectManager, CommonSubprocess
+from loopchain.baseservice import PeerManager, PeerStatus, TimerService
 from loopchain.baseservice import RestStubManager, NodeSubscriber
-from loopchain.baseservice import StubManager, PeerManager, PeerStatus, TimerService
 from loopchain.blockchain import Epoch, AnnounceNewBlockError
 from loopchain.blockchain.blocks import Block, BlockBuilder
 from loopchain.blockchain.transactions import TransactionSerializer
@@ -39,7 +39,7 @@ from loopchain.channel.channel_property import ChannelProperty
 from loopchain.channel.channel_statemachine import ChannelStateMachine
 from loopchain.crypto.signature import Signer
 from loopchain.peer import BlockManager
-from loopchain.protos import loopchain_pb2_grpc, message_code, loopchain_pb2
+from loopchain.protos import message_code, loopchain_pb2
 from loopchain.utils import loggers, command_arguments
 from loopchain.utils.icon_service import convert_params, ParamType, response_to_json_query
 from loopchain.utils.message_queue import StubCollection
@@ -216,12 +216,10 @@ class ChannelService:
         await self.__init_sub_services()
 
     async def __init_network(self):
-        self.__init_radio_station_stub()
-
         if self.is_support_node_function(conf.NodeFunction.Vote):
-            if conf.ENABLE_REP_RADIO_STATION:
-                self.connect_to_radio_station()
             await self._load_peers()
+        else:
+            self.__init_radio_station_stub()
 
     async def evaluate_network(self):
         await self._select_node_type()
@@ -362,15 +360,10 @@ class ChannelService:
                                block=True, block_timeout=conf.TIMEOUT_FOR_FUTURE)
 
     def __init_radio_station_stub(self):
-        if self.is_support_node_function(conf.NodeFunction.Vote):
-            if conf.ENABLE_REP_RADIO_STATION:
-                self.__radio_station_stub = StubManager.get_stub_manager_to_server(
-                    ChannelProperty().radio_station_target,
-                    loopchain_pb2_grpc.RadioStationStub,
-                    conf.CONNECTION_RETRY_TIMEOUT_TO_RS,
-                    ssl_auth_type=conf.GRPC_SSL_TYPE)
-        else:
-            self.__radio_station_stub = RestStubManager(ChannelProperty().radio_station_target, ChannelProperty().name)
+        self.__radio_station_stub = RestStubManager(
+            ChannelProperty().radio_station_target,
+            ChannelProperty().name
+        )
 
     async def __init_score_container(self):
         """create score container and save score_info and score_stub
