@@ -19,8 +19,6 @@ import getpass
 import multiprocessing
 import signal
 import timeit
-import json
-from functools import partial
 
 import grpc
 
@@ -30,7 +28,7 @@ from loopchain.blockchain import *
 from loopchain.container import RestService
 from loopchain.crypto.signature import Signer
 from loopchain.peer import PeerInnerService, PeerOuterService
-from loopchain.protos import loopchain_pb2, loopchain_pb2_grpc
+from loopchain.protos import loopchain_pb2_grpc
 from loopchain.tools.grpc_helper import GRPCHelper
 from loopchain.utils import loggers, command_arguments
 from loopchain.utils.message_queue import StubCollection
@@ -42,26 +40,13 @@ class PeerService:
     """Main class of peer service having outer & inner gRPC interface
 
     """
-    def __init__(self, radio_station_target=None, node_type=None):
+    def __init__(self, radio_station_target=None):
         """Peer는 Radio Station 에 접속하여 leader 및 다른 Peer에 대한 접속 정보를 전달 받는다.
 
         :param radio_station_target: IP:Port of Radio Station
-        :param node_type: node type
         :return:
         """
-        node_type = node_type or conf.NodeType.CommunityNode
-
-        self.is_support_node_function = \
-            partial(conf.NodeType.is_support_node_function, node_type=node_type)
-
-        utils.logger.spam(f"Your Peer Service runs on debugging MODE!")
-        utils.logger.spam(f"You can see many terrible garbage logs just for debugging, DO U Really want it?")
-
-        self._node_type = node_type
-
         self._radio_station_target = radio_station_target
-        logging.info("Set Radio Station target is " + self._radio_station_target)
-
         self._radio_station_stub = None
         self._peer_id = None
         self._node_key = bytes()
@@ -105,10 +90,6 @@ class PeerService:
         return self._channel_infos
 
     @property
-    def node_type(self):
-        return self._node_type
-
-    @property
     def radio_station_target(self):
         return self._radio_station_target
 
@@ -145,32 +126,11 @@ class PeerService:
         self.p2p_outer_server.stop(None)
 
     def _get_channel_infos(self):
-        if self.is_support_node_function(conf.NodeFunction.Vote):
-            if conf.ENABLE_REP_RADIO_STATION:
-                response = self.stub_to_radiostation.call_in_times(
-                    method_name="GetChannelInfos",
-                    message=loopchain_pb2.GetChannelInfosRequest(
-                        peer_id=self._peer_id,
-                        peer_target=self._peer_target,
-                        group_id=self._peer_id),
-                    retry_times=conf.CONNECTION_RETRY_TIMES_TO_RS,
-                    is_stub_reuse=False,
-                    timeout=conf.CONNECTION_TIMEOUT_TO_RS
-                )
-
-                if not response:
-                    return None
-                logging.info(f"Connect to channels({utils.pretty_json(response.channel_infos)})")
-                return json.loads(response.channel_infos)
-            elif conf.LOAD_PEERS_FROM_IISS:
-                # this is temporary code for legacy support, and will be removed at next release.
-                return {channel: {'score_package': DEFAULT_SCORE_PACKAGE}
-                        for channel in conf.CHANNEL_OPTION}
-            else:
-                return utils.load_json_data(conf.CHANNEL_MANAGE_DATA_PATH)
-
-        return {channel: {'score_package': DEFAULT_SCORE_PACKAGE}
-                for channel in conf.CHANNEL_OPTION}
+        if self._radio_station_target or conf.LOAD_PEERS_FROM_IISS:
+            return {channel: {'score_package': DEFAULT_SCORE_PACKAGE}
+                    for channel in conf.CHANNEL_OPTION}
+        else:
+            return utils.load_json_data(conf.CHANNEL_MANAGE_DATA_PATH)
 
     def _init_port(self, port):
         # service 초기화 작업
@@ -348,16 +308,3 @@ class PeerService:
 
     def _load_channel_infos(self):
         self._channel_infos = self._get_channel_infos()
-
-    async def change_node_type(self, node_type):
-        if self._node_type.value == node_type:
-            utils.logger.warning(f"There's no change in node type.")
-            return
-
-        self._node_type = conf.NodeType(node_type)
-        self.is_support_node_function = \
-            partial(conf.NodeType.is_support_node_function, node_type=node_type)
-
-        self._radio_station_stub = None
-
-        self._load_channel_infos()

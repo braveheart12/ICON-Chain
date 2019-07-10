@@ -44,7 +44,7 @@ class NodeSubscriber:
     def __init__(self, channel, rs_target):
         self._target_uri = f"{'wss' if conf.SUBSCRIBE_USE_HTTPS else 'ws'}://{rs_target}/api/ws/{channel}"
         self._exception = None
-        self._websocket = None
+        self._websocket: websockets.WebSocketClientProtocol = None
         self._subscribe_event: Event = None
 
         ws_methods.add(self.node_ws_PublishHeartbeat)

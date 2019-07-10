@@ -649,7 +649,7 @@ class PeerOuterService(loopchain_pb2_grpc.PeerServiceServicer):
                 self.peer_service.inner_service.loop
             )
             utils.logger.spam(f"peer_outer_service::Unsubscribe remove_audience target({request.peer_target}) "
-                             f"in channel({request.channel})")
+                              f"in channel({request.channel})")
         else:
             logging.error(f"This target({request.peer_target}), {request.node_type} failed to unsubscribe.")
             return loopchain_pb2.CommonReply(response_code=message_code.get_response_code(message_code.Response.fail),

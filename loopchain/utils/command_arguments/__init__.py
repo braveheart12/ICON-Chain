@@ -16,6 +16,8 @@ from argparse import Namespace
 from enum import IntEnum
 from typing import Dict
 
+OPTIONAL = '?'
+
 
 class Type(IntEnum):
     ServiceType = 0
@@ -65,7 +67,7 @@ types_by_names = {
 
 attributes = {
     Type.ServiceType:
-        Attribute("service_type", type=str,
+        Attribute("service_type", type=str, default='citizen', nargs=OPTIONAL,
                   help="loopchain service to start [rs|peer|citizen|rest|rest-rs|score|tool|admin]"),
 
     Type.Port:
