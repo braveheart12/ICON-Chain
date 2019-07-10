@@ -2,10 +2,11 @@ import json
 import os
 import time
 
-import conftest
 import pytest
-from conftest import Loopchain
 from iconsdk.wallet.wallet import KeyWallet
+
+from . import conftest
+from .conftest import Loopchain
 
 
 # @pytest.mark.skip

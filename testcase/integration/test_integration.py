@@ -2,14 +2,17 @@ import binascii
 import random
 import time
 
-import conftest
 import pytest
-from conftest import Loopchain
 from iconsdk.builder.transaction_builder import MessageTransactionBuilder
 from iconsdk.icon_service import IconService
 from iconsdk.providers.http_provider import HTTPProvider
 from iconsdk.signed_transaction import SignedTransaction
 from iconsdk.wallet.wallet import KeyWallet
+
+from loopchain import conf
+from loopchain import utils
+from . import conftest
+from .conftest import Loopchain
 
 # Global variables
 peer_conf_path_list = []  # Peer config file path list. Needed to query peers' information.
@@ -91,9 +94,9 @@ class TestLoopchain:
         peer_count = int(request.config.getoption("--peer-count"))
         channel_count = int(request.config.getoption("--channel-count"))
 
-        billionaire = genesis_data["transaction_data"]["accounts"][2]
-        target_account = billionaire["address"]
-        expected_balance = int(billionaire["balance"], 16)
+        genesis_node = genesis_data["transaction_data"]["accounts"][2]
+        target_account = genesis_node["address"]
+        expected_balance = int(genesis_node["balance"], 16)
         print("Address of billionaire account: ", target_account)
 
         querried_balance_list = []
@@ -102,7 +105,7 @@ class TestLoopchain:
             port = 9000 + (peer_order * 100)
 
             for channel_num in range(channel_count):
-                url = f"http://localhost:{port}/api/v3/channel_{channel_num}"
+                url = utils.normalize_request_url(f"http://localhost:{port}", conf.ApiVersion.v3, f"channel_{channel_num}")
                 print("Req url: ", url)
                 icon_service = IconService(HTTPProvider(url))
                 queried_balance = icon_service.get_balance(target_account)

@@ -132,14 +132,14 @@ def generate_genesis_file(genesis_path: str, accounts: list):
         json.dump(genesis_data, f)
 
 
-def get_peer_info(conf_path_list: list, order: int = 0):
+def get_peer_info(conf_path_list: list, order: int = 0) -> dict:
     """Get peer information"""
     target_peer_conf_path = conf_path_list[order]
 
     with open(target_peer_conf_path) as f:
-        default_peer_conf = json.load(f)
+        peer_info = json.load(f)
 
-    return default_peer_conf
+    return peer_info
 
 
 def get_genesis_data(conf_path_list: list):
@@ -147,8 +147,8 @@ def get_genesis_data(conf_path_list: list):
     if not conf_path_list:
         raise RuntimeError()
 
-    default_peer_conf = get_peer_info(conf_path_list=conf_path_list, order=0)
-    genesis_path = default_peer_conf["CHANNEL_OPTION"]["channel_0"]["genesis_data_path"]
+    peer_info = get_peer_info(conf_path_list=conf_path_list, order=0)
+    genesis_path = peer_info["CHANNEL_OPTION"]["channel_0"]["genesis_data_path"]
 
     with open(genesis_path) as f:
         loaded_genesis_data = json.load(f)
