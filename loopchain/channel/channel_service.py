@@ -666,7 +666,7 @@ class ChannelService:
             }
             transactions.append(transaction)
 
-        request = {
+        request_origin = {
             'block': {
                 'blockHeight': _block.header.height,
                 'blockHash': _block.header.hash.hex(),
@@ -679,30 +679,48 @@ class ChannelService:
         }
 
         if conf.ENABLE_IISS:
-            request['isBlockEditable'] = hex(conf.ENABLE_IISS)
+            request_origin['isBlockEditable'] = hex(conf.ENABLE_IISS)
 
-        # utils.logger.notice(f"in score invoke request({request})")
-
-        request = convert_params(request, ParamType.invoke)
+        request = convert_params(request_origin, ParamType.invoke)
         stub = StubCollection().icon_score_stubs[ChannelProperty().name]
         response: dict = cast(dict, stub.sync_task().invoke(request))
         response_to_json_query(response)
 
-        # utils.logger.notice(f"in score invoke response({response})")
+        if request_origin['transactions']:
+            utils.logger.notice(f"in score invoke \nrequest({request_origin}) \nresponse({response})")
 
-        tx_receipts = response.get("txResults", None)
-        if not isinstance(tx_receipts, dict):
-            tx_receipts = {tx_receipt['txHash']: tx_receipt for tx_receipt in cast(list, tx_receipts)}
-
-        added_transactions = response.get("addedTransactions", None)
-        utils.logger.notice(f"in score invoke added_transactions({added_transactions})")
+        tx_receipts_origin = response.get("txResults", None)
+        if not isinstance(tx_receipts_origin, dict):
+            tx_receipts = {tx_receipt['txHash']: tx_receipt for tx_receipt in cast(list, tx_receipts_origin)}
+        else:
+            tx_receipts = tx_receipts_origin
 
         next_prep = response.get("prep", None)
-        utils.logger.notice(f"in score invoke next_prep({next_prep})")
+        if next_prep:
+            utils.logger.notice(f"in score invoke next_prep({next_prep})")
 
         block_builder = BlockBuilder.from_new(_block, self.__block_manager.get_blockchain().tx_versioner)
         block_builder.reset_cache()
         block_builder.peer_id = _block.header.peer_id
+
+        added_transactions = response.get("addedTransactions", None)
+        if added_transactions:
+            utils.logger.notice(f"in score invoke added_transactions({added_transactions})")
+
+            original_transactions = block_builder.transactions.copy()
+            block_builder.transactions.clear()
+
+            utils.logger.notice(f"in score invoke original_transactions({original_transactions})")
+            for tx_receipt in tx_receipts_origin:
+                utils.logger.notice(f"in score invoke tx_receipt({tx_receipt})")
+
+                ts = TransactionSerializer.new(self.__block_manager.get_blockchain().tx_versioner.get_version(
+                    added_transactions[tx_receipt['txHash']]),
+                    self.__block_manager.get_blockchain().tx_versioner)
+
+                # TODO make tx from added_transactions
+                # tx = ts.from_(added_transactions[tx_receipt['txHash']])
+                # block_builder.transactions[tx_receipt['txHash']] = tx
 
         block_builder.commit_state = {
             ChannelProperty().name: response['stateRootHash']

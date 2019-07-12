@@ -163,23 +163,20 @@ class PeerManager:
             util.logger.debug(f"There is no change in peers.")
             return
 
-        util.logger.debug(f"Peer manager have to update with new list.")
-        self.reset_peers(check_status=False)
-
         if not conf.LOAD_PEERS_FROM_IISS:
             return
 
+        util.logger.debug(f"Peer manager have to update with new list.")
+        self.reset_peers(check_status=False)
+
         reps = response["result"]["preps"]
         self._add_reps(reps)
-
-        self.show_peers()
 
     async def load_peers_from_file(self):
         channel_info = util.load_json_data(conf.CHANNEL_MANAGE_DATA_PATH)
         reps: list = channel_info[ChannelProperty().name].get("peers")
         for peer_info in reps:
             self.add_peer(peer_info)
-        self.show_peers()
 
     async def load_peers_from_rest_call(self):
         response = ObjectManager().channel_service.radio_station_stub.call("GetReps")

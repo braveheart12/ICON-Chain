@@ -45,7 +45,7 @@ install:
 
 # pip install packages
 install-dev:
-	$(PIP_INSTALL) git+https://github.com/icon-project/icon-service.git@Loopchain_IISS
+	$(PIP_INSTALL) git+https://github.com/icon-project/icon-service.git@loopchain_iiss
 	$(PIP_INSTALL) git+https://github.com/icon-project/icon-commons.git@master
 	$(PIP_INSTALL) git+https://github.com/icon-project/icon-rpc-server.git@develop
 	$(PIP_INSTALL) tbears
