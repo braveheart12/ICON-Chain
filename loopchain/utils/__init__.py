@@ -25,19 +25,19 @@ import sys
 import time
 import timeit
 import traceback
-import verboselogs
 from binascii import unhexlify
 from contextlib import closing
 from decimal import Decimal
-from fluent import event
 from pathlib import Path
 from subprocess import PIPE, Popen, TimeoutExpired
 
+import verboselogs
+from fluent import event
+
 from loopchain import configure as conf
 from loopchain.protos import loopchain_pb2, message_code
-from loopchain.tools.grpc_helper import GRPCHelper
 from loopchain.store.key_value_store import KeyValueStoreError, KeyValueStore
-from loopchain.store.key_value_store_factory import KeyValueStoreFactory
+from loopchain.tools.grpc_helper import GRPCHelper
 
 apm_event = None
 
@@ -483,7 +483,7 @@ def init_default_key_value_store(store_identity) -> KeyValueStore:
     while store is None and retry_count < conf.MAX_RETRY_CREATE_DB:
         try:
             uri = f"file://{store_path}"
-            store = KeyValueStoreFactory.new(uri, create_if_missing=True)
+            store = KeyValueStore.new(uri, create_if_missing=True)
         except KeyValueStoreError as e:
             logging.error(f"KeyValueStoreError: {e}")
             logger.debug(f"retry_count: {retry_count}, uri: {uri}")

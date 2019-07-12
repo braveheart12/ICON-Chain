@@ -16,6 +16,8 @@
 import abc
 import functools
 
+from loopchain import utils, configure as conf
+
 
 class KeyValueStoreError(Exception):
     pass
@@ -134,6 +136,33 @@ class KeyValueStoreCancelableWriteBatch(abc.ABC):
 
 
 class KeyValueStore(abc.ABC):
+    STORE_TYPE_PLYVEL = 'plyvel'
+    STORE_TYPE_LEVELDB = 'leveldb'
+    STORE_TYPE_DICT = 'dict'
+
+    @staticmethod
+    def new(uri: str, store_type: str = None, **kwargs) -> 'KeyValueStore':
+        if store_type is None:
+            store_type = conf.DEFAULT_KEY_VALUE_STORE_TYPE
+
+        utils.logger.info(f"New KeyValueStore. store_type={store_type}, uri={uri}")
+
+        if store_type == KeyValueStore.STORE_TYPE_PLYVEL:
+            utils.logger.debug(f"New KeyValueStorePlyvel.")
+            from loopchain.store.key_value_store_plyvel import KeyValueStorePlyvel
+            return KeyValueStorePlyvel(uri, **kwargs)
+        elif store_type == KeyValueStore.STORE_TYPE_LEVELDB:
+            utils.logger.warning(f"New KeyValueStoreLevelDb. store_type={store_type}, uri={uri}")
+            from loopchain.store.key_value_store_leveldb import KeyValueStoreLevelDb
+            return KeyValueStoreLevelDb(uri, **kwargs)
+        elif store_type == KeyValueStore.STORE_TYPE_DICT:
+            raise ValueError(f"KeyValueStoreDict is just for development.")
+            # if you want to use keyValueStoreDict for develop, uncomment below lines
+            # from loopchain.store.key_value_store_dict import KeyValueStoreDict
+            # return KeyValueStoreDict(uri, **kwargs)
+        else:
+            raise ValueError(f"store_name is invalid. store_type={store_type}")
+
     @abc.abstractmethod
     def get(self, key: bytes, default=None, **kwargs) -> bytes:
         """Get a value of the key

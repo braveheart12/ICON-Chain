@@ -141,7 +141,7 @@ class KeyValueStoreLevelDb(KeyValueStore):
         return _KeyValueStoreCancelableWriteBatchLevelDb(self, self._db, sync)
 
     @_error_convert
-    def Iterator(self, start_key: bytes=None, stop_key: bytes=None, include_value: bool=True, **kwargs):
+    def Iterator(self, start_key: bytes = None, stop_key: bytes = None, include_value: bool = True, **kwargs):
         if 'key_from' in kwargs or 'key_to' in kwargs:
             raise ValueError(f"Use start_key and stop_key arguments instead of key_from and key_to arguments")
 

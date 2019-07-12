@@ -20,25 +20,24 @@ import zlib
 from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Union, List
-from loopchain import utils
+
 from loopchain import configure as conf
+from loopchain import utils
 from loopchain.baseservice import ScoreResponse, ObjectManager
-from loopchain.blockchain.types import Hash32, ExternalAddress, TransactionStatusInQueue
 from loopchain.blockchain.blocks import Block, BlockBuilder, BlockSerializer
 from loopchain.blockchain.blocks import BlockProver, BlockProverType, BlockVersioner
-from loopchain.blockchain.transactions import Transaction, TransactionBuilder
-from loopchain.blockchain.transactions import TransactionSerializer, TransactionVersioner
-from loopchain.blockchain.votes.v0_1a import BlockVotes, LeaderVotes
 from loopchain.blockchain.exception import *
 from loopchain.blockchain.score_base import *
+from loopchain.blockchain.transactions import Transaction, TransactionBuilder
+from loopchain.blockchain.transactions import TransactionSerializer, TransactionVersioner
+from loopchain.blockchain.types import Hash32, ExternalAddress, TransactionStatusInQueue
+from loopchain.blockchain.votes.v0_1a import BlockVotes
 from loopchain.channel.channel_property import ChannelProperty
-from loopchain.utils.message_queue import StubCollection
 from loopchain.store.key_value_store import KeyValueStoreError, KeyValueStore
-from loopchain.store.key_value_store_factory import KeyValueStoreFactory
+from loopchain.utils.message_queue import StubCollection
 
 if TYPE_CHECKING:
     from loopchain.peer import BlockManager
-
 
 __all__ = ("NID", "BlockChain")
 
@@ -62,7 +61,7 @@ class BlockChain:
     CONFIRM_INFO_KEY = b'confirm_info_key'
     INVOKE_RESULT_BLOCK_HEIGHT_KEY = b'invoke_result_block_height_key'
 
-    def __init__(self, blockchain_store: KeyValueStore=None, channel_name=None):
+    def __init__(self, blockchain_store: KeyValueStore = None, channel_name=None):
         if channel_name is None:
             channel_name = conf.LOOPCHAIN_DEFAULT_CHANNEL
 
@@ -82,7 +81,7 @@ class BlockChain:
         if self.__confirmed_block_store is None:
             try:
                 uri = f"file://{conf.DEFAULT_LEVEL_DB_PATH}"
-                self.__confirmed_block_store = KeyValueStoreFactory.new(uri)
+                self.__confirmed_block_store = KeyValueStore.new(uri)
                 self.__confirmed_block_store_allocated = True
             except KeyValueStoreError:
                 raise KeyValueStoreError(f"Fail to create plyvel store. path={conf.DEFAULT_LEVEL_DB_PATH}")
@@ -150,7 +149,9 @@ class BlockChain:
                 self.__total_tx = self._rebuild_transaction_count_from_blocks()
 
             logging.info(f"rebuilt blocks, total_tx: {self.__total_tx}")
-            logging.info(f"block hash({self.__last_block.header.hash.hex()}) and height({self.__last_block.header.height})")
+            logging.info(
+                f"block hash({self.__last_block.header.hash.hex()})"
+                f" and height({self.__last_block.header.height})")
             return True
         else:
             logging.info("There is no block.")
@@ -410,8 +411,8 @@ class BlockChain:
         else:
             # score_last_block_height is two or more higher than loopchain_last_block_height.
             utils.exit_and_msg("Too many different(over 2) of block height between the loopchain and score. "
-                              "Peer will be down. : "
-                              f"loopchain({next_height})/score({score_last_block_height})")
+                               "Peer will be down. : "
+                               f"loopchain({next_height})/score({score_last_block_height})")
             return True
 
     def __add_tx_to_block_db(self, block, invoke_results):
@@ -869,6 +870,6 @@ class BlockChain:
         if block.header.version == "0.1a":
             raise RuntimeError(f"Block version({block.header.version}) of the Tx does not support proof.")
 
-        block_prover = BlockProver.new(block.header.version, None, BlockProverType.Receipt)    # Do not need receipts
+        block_prover = BlockProver.new(block.header.version, None, BlockProverType.Receipt)  # Do not need receipts
         receipts_hash = block_prover.to_hash32(tx_result)
         return block_prover.prove(receipts_hash, block.header.receipts_hash, proof)
