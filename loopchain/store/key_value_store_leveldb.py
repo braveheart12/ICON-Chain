@@ -124,8 +124,9 @@ class KeyValueStoreLevelDb(KeyValueStore):
 
     @_error_convert
     def close(self):
-        del self._db
-        self._db = None
+        if self._db:
+            del self._db
+            self._db = None
 
     @_error_convert
     def destroy_store(self):

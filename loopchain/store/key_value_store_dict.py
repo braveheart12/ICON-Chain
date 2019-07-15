@@ -124,7 +124,8 @@ class KeyValueStoreDict(KeyValueStore):
 
     @_error_convert
     def close(self):
-        self._store_items = None
+        if not self._store_items:
+            self._store_items = None
 
     @_error_convert
     def destroy_store(self):

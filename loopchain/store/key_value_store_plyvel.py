@@ -119,7 +119,9 @@ class KeyValueStorePlyvel(KeyValueStore):
 
     @_error_convert
     def close(self):
-        self._db.close()
+        if self._db:
+            self._db.close()
+            self._db = None
 
     @_error_convert
     def destroy_store(self):

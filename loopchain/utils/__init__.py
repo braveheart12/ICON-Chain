@@ -30,6 +30,7 @@ from contextlib import closing
 from decimal import Decimal
 from pathlib import Path
 from subprocess import PIPE, Popen, TimeoutExpired
+from typing import Tuple, Optional
 
 import verboselogs
 from fluent import event
@@ -465,7 +466,7 @@ def parse_target_list(targets: str) -> list:
     return target_list
 
 
-def init_default_key_value_store(store_identity) -> KeyValueStore:
+def init_default_key_value_store(store_identity) -> Tuple[KeyValueStore, str]:
     """init default key value store
 
     :param store_identity: identity for store
@@ -474,8 +475,7 @@ def init_default_key_value_store(store_identity) -> KeyValueStore:
     if not os.path.exists(conf.DEFAULT_STORAGE_PATH):
         os.makedirs(conf.DEFAULT_STORAGE_PATH, exist_ok=True)
 
-    store_default_path = os.path.join(conf.DEFAULT_STORAGE_PATH, 'db_' + store_identity)
-    store_path = store_default_path
+    store_path = os.path.join(conf.DEFAULT_STORAGE_PATH, 'db_' + store_identity)
     logger.spam(f"utils:init_default_key_value_store ({store_identity})")
 
     retry_count = 0
