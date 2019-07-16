@@ -69,7 +69,7 @@ class TestKeyValueStore(unittest.TestCase):
         with self.assertRaises(KeyError):
             store.get(b'unknown_key')
 
-        self.assertEqual(store.get(b'unknown_key', b'test_default_value'), b'test_default_value')
+        self.assertEqual(store.get(b'unknown_key', default=b'test_default_value'), b'test_default_value')
 
         count = 0
         for key, value in store.Iterator(start_key=b'test_key_2', stop_key=b'test_key_4'):

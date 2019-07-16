@@ -101,7 +101,7 @@ class KeyValueStoreLevelDb(KeyValueStore):
 
     @_validate_args_bytes_without_first
     @_error_convert
-    def get(self, key, default=None, **kwargs) -> bytes:
+    def get(self, key, *, default=None, **kwargs) -> bytes:
         if default is not None:
             _validate_args_bytes(default)
 
@@ -114,12 +114,12 @@ class KeyValueStoreLevelDb(KeyValueStore):
 
     @_validate_args_bytes_without_first
     @_error_convert
-    def put(self, key, value, sync=False, **kwargs):
+    def put(self, key, value, *, sync=False, **kwargs):
         self._db.Put(key, value, sync=sync, **kwargs)
 
     @_validate_args_bytes_without_first
     @_error_convert
-    def delete(self, key, sync=False, **kwargs):
+    def delete(self, key, *, sync=False, **kwargs):
         self._db.Delete(key, sync=sync, **kwargs)
 
     @_error_convert
